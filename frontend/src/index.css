@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-discord-darkest text-discord-text font-sans;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  #root {
+    @apply h-screen w-screen;
+  }
+}
+
+@layer components {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-discord-darker;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-discord-dark rounded;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-discord-light;
+  }
+}
+
