@@ -77,8 +77,21 @@ async def get_messages(
             select(MessageReaction).where(MessageReaction.message_id == msg.id)
         )
         reactions = reactions_result.scalars().all()
-        
-        msg_dict = MessageResponse.model_validate(msg).model_dump()
+
+        # Build a plain dict from the SQLAlchemy Message object to avoid
+        # Pydantic trying to access ORM relationships (which can trigger async IO)
+        msg_dict = {
+            "id": msg.id,
+            "room_id": msg.room_id,
+            "author_id": msg.author_id,
+            "content": msg.content,
+            "content_type": msg.content_type,
+            "attachments_json": msg.attachments_json,
+            "created_at": msg.created_at,
+            "edited_at": msg.edited_at,
+            "deleted_at": msg.deleted_at,
+        }
+
         msg_dict["author"] = {
             "id": author.id,
             "username": author.username,
@@ -142,8 +155,18 @@ async def create_message(
     await db.commit()
     await db.refresh(message)
     
-    # Populate author
-    msg_dict = MessageResponse.model_validate(message).model_dump()
+    # Build response manually to avoid validating ORM relationships directly
+    msg_dict = {
+        "id": message.id,
+        "room_id": message.room_id,
+        "author_id": message.author_id,
+        "content": message.content,
+        "content_type": message.content_type,
+        "attachments_json": message.attachments_json,
+        "created_at": message.created_at,
+        "edited_at": message.edited_at,
+        "deleted_at": message.deleted_at,
+    }
     msg_dict["author"] = {
         "id": current_user.id,
         "username": current_user.username,
@@ -151,7 +174,7 @@ async def create_message(
         "avatar_url": current_user.avatar_url,
     }
     msg_dict["reactions"] = []
-    
+
     return MessageResponse(**msg_dict)
 
 

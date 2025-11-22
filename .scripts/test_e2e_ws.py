@@ -37,12 +37,18 @@ for u in users:
     except Exception as e:
         print('login exception', e)
 
-# Create room using first user's token
+# Create room using first user's token (use a unique name to avoid collisions)
 room_id = None
 if tokens.get('ci_user_a'):
     headers = {'Authorization': f"Bearer {tokens['ci_user_a']}"}
     try:
-        r = requests.post(f"{BASE}/rooms", json={'name': 'e2e-room', 'description': 'e2e test room'}, headers=headers, timeout=5)
+        unique_name = f"e2e-room-{int(time.time()*1000)}"
+        r = requests.post(
+            f"{BASE}/rooms",
+            json={'name': unique_name, 'description': 'e2e test room'},
+            headers=headers,
+            timeout=5,
+        )
         print('create room status', r.status_code)
         if r.status_code in (200,201):
             room_id = r.json().get('id')
@@ -50,11 +56,11 @@ if tokens.get('ci_user_a'):
         print('create room exception', e)
 
 if not room_id:
-    # Try to find existing room named e2e-room
+    # Try to find any existing room created recently
     try:
         r = requests.get(f"{BASE}/rooms", timeout=5)
         for rm in r.json():
-            if rm.get('name') == 'e2e-room':
+            if rm.get('name', '').startswith('e2e-room'):
                 room_id = rm.get('id')
                 break
     except Exception as e:
@@ -71,21 +77,39 @@ if room_id and tokens.get('ci_user_a') and tokens.get('ci_user_b'):
         # Give server time to broadcast presence
         time.sleep(0.5)
 
-        # A sends message
-        msg_a = {'type': 'message', 'data': {'content': 'hello from A'}}
+        # A sends message (use server-expected event type)
+        msg_a = {'type': 'message.create', 'data': {'content': 'hello from A'}}
         ws_a.send(json.dumps(msg_a))
 
-        # B should receive it
+        # B should receive a message.create event (ignore presence events)
+        recv_b = None
         ws_b.settimeout(5)
-        recv_b = ws_b.recv()
+        start = time.time()
+        while time.time() - start < 5:
+            try:
+                pkt = ws_b.recv()
+            except Exception:
+                break
+            if 'message.create' in pkt:
+                recv_b = pkt
+                break
         print('B received:', recv_b)
 
         # B replies
-        msg_b = {'type': 'message', 'data': {'content': 'hi A, this is B'}}
+        msg_b = {'type': 'message.create', 'data': {'content': 'hi A, this is B'}}
         ws_b.send(json.dumps(msg_b))
 
+        recv_a = None
         ws_a.settimeout(5)
-        recv_a = ws_a.recv()
+        start = time.time()
+        while time.time() - start < 5:
+            try:
+                pkt = ws_a.recv()
+            except Exception:
+                break
+            if 'message.create' in pkt:
+                recv_a = pkt
+                break
         print('A received:', recv_a)
 
         results['a_recv'] = recv_a

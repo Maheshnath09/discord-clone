@@ -274,7 +274,18 @@ async def get_room_members(
     member_list = []
     for member in members:
         user = await db.get(User, member.user_id)
-        member_dict = RoomMemberResponse.model_validate(member).model_dump()
+
+        # Build plain dict to avoid Pydantic attempting to extract attributes
+        # from the SQLAlchemy ORM object (which can trigger async IO)
+        member_dict = {
+            "id": member.id,
+            "user_id": member.user_id,
+            "room_id": member.room_id,
+            "role": member.role.value if member.role else None,
+            "joined_at": member.joined_at,
+            "muted_until": member.muted_until,
+            "banned_until": member.banned_until,
+        }
         member_dict["user"] = {
             "id": user.id,
             "username": user.username,

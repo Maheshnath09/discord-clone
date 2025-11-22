@@ -83,7 +83,12 @@ class RedisClient:
         if not self.client:
             await self.connect()
         key = f"typing:room:{room_id}:user:{user_id}"
-        await self.client.setex(key, ttl, "1")
+        # If ttl is non-positive, remove the typing key instead of calling
+        # `SETEX` with 0 which Redis rejects (causes ResponseError).
+        if ttl and ttl > 0:
+            await self.client.setex(key, ttl, "1")
+        else:
+            await self.client.delete(key)
     
     async def get_typing_users(self, room_id: int) -> list[int]:
         """Get list of users currently typing in a room."""

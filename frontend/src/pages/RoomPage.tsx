@@ -104,7 +104,9 @@ export default function RoomPage() {
         content,
         content_type: 'text',
       })
-      // Message will be received via WebSocket
+      // Reload messages after posting so the sender sees their message
+      // immediately instead of relying solely on WebSocket broadcasts.
+      await loadMessages()
     } catch (error) {
       console.error('Failed to send message:', error)
     }

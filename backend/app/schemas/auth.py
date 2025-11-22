@@ -1,7 +1,7 @@
 """
 Authentication schemas.
 """
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 
 
@@ -25,7 +25,11 @@ class LoginRequest(BaseModel):
 
 class RegisterRequest(BaseModel):
     """Registration request schema."""
-    email: EmailStr
+    # Use plain string here to avoid relying on Pydantic's built-in
+    # email parsing which may be incompatible with installed versions
+    # in some environments. The application will perform any needed
+    # normalization/validation at the business logic layer.
+    email: str
     username: str
     password: str
     display_name: Optional[str] = None

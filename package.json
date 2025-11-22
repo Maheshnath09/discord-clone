@@ -1,0 +1,15 @@
+{
+  "name": "work",
+  "version": "1.0.0",
+  "description": "A production-ready, real-time chat application inspired by Discord. Built with FastAPI backend, React + TypeScript frontend, SQLite/PostgreSQL database, and Redis for real-time features.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.46.1"
+  }
+}
