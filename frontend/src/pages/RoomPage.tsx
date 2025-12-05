@@ -77,8 +77,8 @@ export default function RoomPage() {
     wsClient.connect(parseInt(roomId), accessToken).then(() => {
       // Listen for new messages
       wsClient.on('message.create', (data: any) => {
-        // Reload messages or add new message to state
-        loadMessages()
+        // Append new incoming message to state
+        setMessages((prev) => (prev ? [...prev, data] : [data]))
       })
 
       // Listen for typing indicators
@@ -100,13 +100,13 @@ export default function RoomPage() {
     if (!roomId || !content.trim()) return
 
     try {
-      await api.post(`/rooms/${roomId}/messages`, {
+      const res = await api.post(`/rooms/${roomId}/messages`, {
         content,
         content_type: 'text',
       })
-      // Reload messages after posting so the sender sees their message
-      // immediately instead of relying solely on WebSocket broadcasts.
-      await loadMessages()
+      // Append created message immediately for snappy UI.
+      const created = res.data
+      setMessages((prev) => (prev ? [...prev, created] : [created]))
     } catch (error) {
       console.error('Failed to send message:', error)
     }
@@ -161,8 +161,10 @@ export default function RoomPage() {
           />
         </div>
 
-        {/* Member list */}
-        <MemberList roomId={parseInt(roomId!)} />
+        {/* Member list (hidden on small screens) */}
+        <div className="hidden md:block">
+          <MemberList roomId={parseInt(roomId!)} />
+        </div>
       </div>
     </div>
   )

@@ -153,3 +153,4 @@ async def ensure_demo_data():
         await session.commit()
 
 
+

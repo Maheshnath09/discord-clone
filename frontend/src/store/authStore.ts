@@ -61,7 +61,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
+      // Use sessionStorage so different tabs/windows can have independent
+      // authentication state (localStorage is shared across tabs).
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({ accessToken: state.accessToken }),
     }
   )

@@ -14,6 +14,7 @@ from app.models.room import Room, RoomMember
 from app.models.message import Message, MessageReaction
 from app.schemas.message import MessageCreate, MessageUpdate, MessageResponse, MessageReactionResponse
 from app.api.dependencies import get_current_user
+from app.websockets.manager import websocket_manager
 
 router = APIRouter()
 
@@ -174,6 +175,21 @@ async def create_message(
         "avatar_url": current_user.avatar_url,
     }
     msg_dict["reactions"] = []
+
+    # Broadcast the new message to any connected WebSocket clients in the room.
+    # We do this in a best-effort manner: if the websocket manager isn't
+    # initialized (for example in certain test modes), don't raise.
+    try:
+        broadcast_payload = {
+            "type": "message.create",
+            "data": msg_dict,
+        }
+        # Fire-and-forget: let the websocket manager handle publishing to local
+        # connections and Redis for other instances.
+        await websocket_manager.broadcast_to_room(room_id, broadcast_payload)
+    except Exception:
+        # Log is intentionally omitted to avoid noise; this is non-fatal.
+        pass
 
     return MessageResponse(**msg_dict)
 
