@@ -1,7 +1,12 @@
 import axios from 'axios'
 
+// Use environment variable for API URL, fallback to relative path for local dev
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : '/api/v1'
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -32,16 +37,16 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
-    
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-      
+
       try {
-        const response = await axios.post('/api/v1/auth/refresh', {}, {
+        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
           withCredentials: true,
         })
         const { access_token } = response.data
-        
+
         // Update stored token
         const authStorage = localStorage.getItem('auth-storage')
         if (authStorage) {
@@ -49,7 +54,7 @@ api.interceptors.response.use(
           parsed.state.accessToken = access_token
           localStorage.setItem('auth-storage', JSON.stringify(parsed))
         }
-        
+
         originalRequest.headers.Authorization = `Bearer ${access_token}`
         return api(originalRequest)
       } catch (refreshError) {
@@ -58,7 +63,7 @@ api.interceptors.response.use(
         return Promise.reject(refreshError)
       }
     }
-    
+
     return Promise.reject(error)
   }
 )
