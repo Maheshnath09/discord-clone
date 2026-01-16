@@ -20,8 +20,13 @@ if settings.DATABASE_URL.startswith("sqlite"):
     )
 else:
     # PostgreSQL or other databases
+    # Fix for asyncpg: convert sslmode to ssl (asyncpg uses 'ssl' not 'sslmode')
+    db_url = settings.DATABASE_URL
+    if "sslmode=" in db_url:
+        db_url = db_url.replace("sslmode=", "ssl=")
+    
     engine = create_async_engine(
-        settings.DATABASE_URL,
+        db_url,
         echo=settings.ENVIRONMENT == "development",
     )
 
