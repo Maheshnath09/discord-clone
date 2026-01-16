@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuthStore } from './store/authStore'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -8,7 +9,14 @@ import RoomsPage from './pages/RoomsPage'
 import ProfilePage from './pages/ProfilePage'
 
 function App() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, checkAuth, accessToken } = useAuthStore()
+
+  // Validate token and load user data on mount
+  useEffect(() => {
+    if (accessToken) {
+      checkAuth()
+    }
+  }, [accessToken, checkAuth])
 
   return (
     <BrowserRouter>
@@ -29,6 +37,7 @@ function App() {
 }
 
 export default App
+
 
 
 

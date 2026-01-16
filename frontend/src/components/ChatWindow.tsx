@@ -18,9 +18,24 @@ interface ChatWindowProps {
   messages: Message[]
   typingUsers: Set<number>
   messagesEndRef: React.RefObject<HTMLDivElement>
+  currentUserId?: number
 }
 
-export default function ChatWindow({ messages, typingUsers, messagesEndRef }: ChatWindowProps) {
+// Animated typing dots component
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center space-x-0.5 ml-1">
+      <span className="w-1.5 h-1.5 bg-discord-textMuted rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+      <span className="w-1.5 h-1.5 bg-discord-textMuted rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+      <span className="w-1.5 h-1.5 bg-discord-textMuted rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+    </span>
+  )
+}
+
+export default function ChatWindow({ messages, typingUsers, messagesEndRef, currentUserId }: ChatWindowProps) {
+  // Filter out current user from typing list
+  const otherTypingUsers = Array.from(typingUsers).filter(id => id !== currentUserId)
+
   return (
     <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-4">
       {messages.map((message) => (
@@ -58,17 +73,24 @@ export default function ChatWindow({ messages, typingUsers, messagesEndRef }: Ch
           </div>
         </div>
       ))}
-      
-      {typingUsers.size > 0 && (
-        <div className="text-discord-textMuted text-sm italic">
-          {Array.from(typingUsers).length} user{typingUsers.size > 1 ? 's' : ''} typing...
+
+      {/* Real-time typing indicator */}
+      {otherTypingUsers.length > 0 && (
+        <div className="flex items-center px-2 py-1 text-discord-textMuted text-sm">
+          <span className="font-medium text-white">
+            {otherTypingUsers.length === 1
+              ? 'Someone is typing'
+              : `${otherTypingUsers.length} people are typing`}
+          </span>
+          <TypingDots />
         </div>
       )}
-      
+
       <div ref={messagesEndRef} />
     </div>
   )
 }
+
 
 
 

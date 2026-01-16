@@ -71,6 +71,35 @@ async def health_check():
     return {"status": "healthy"}
 
 
+@app.get("/debug/websocket")
+async def websocket_debug():
+    """Debug endpoint to check WebSocket connection status."""
+    stats = websocket_manager.get_connection_stats()
+    return {
+        "websocket_stats": stats,
+        "message": "Use this to verify WebSocket connections are being tracked"
+    }
+
+
+@app.post("/debug/broadcast/{room_id}")
+async def test_broadcast(room_id: int, message: str = "Test broadcast message"):
+    """Debug endpoint to manually trigger a broadcast to a room."""
+    print(f"[DEBUG] Test broadcast triggered for room {room_id}")
+    broadcast_payload = {
+        "type": "message.create",
+        "data": {
+            "id": 999999,
+            "room_id": room_id,
+            "content": message,
+            "author_id": 0,
+            "author": {"id": 0, "username": "SYSTEM", "display_name": "System Test"},
+            "created_at": "2024-01-01T00:00:00",
+        }
+    }
+    await websocket_manager.broadcast_to_room(room_id, broadcast_payload)
+    return {"status": "broadcast_sent", "room_id": room_id, "message": message}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

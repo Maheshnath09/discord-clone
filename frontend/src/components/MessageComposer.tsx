@@ -21,7 +21,7 @@ export default function MessageComposer({ onSend, onTyping }: MessageComposerPro
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value)
-    
+
     // Handle typing indicator
     if (!isTyping && e.target.value.trim()) {
       setIsTyping(true)
@@ -48,7 +48,7 @@ export default function MessageComposer({ onSend, onTyping }: MessageComposerPro
     setContent('')
     setIsTyping(false)
     onTyping(false)
-    
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
@@ -75,7 +75,7 @@ export default function MessageComposer({ onSend, onTyping }: MessageComposerPro
   }, [content])
 
   return (
-    <div className="p-4 border-t border-discord-darker bg-discord-dark">
+    <div className="flex-shrink-0 p-4 border-t border-discord-darker bg-discord-dark">
       <form onSubmit={handleSubmit}>
         <div className="flex items-end space-x-2">
           <textarea

@@ -6,14 +6,17 @@
   * {
     @apply border-border;
   }
-  body {
+  html, body {
     @apply bg-discord-darkest text-discord-text font-sans;
     margin: 0;
     padding: 0;
+    height: 100%;
     overflow: hidden;
   }
   #root {
-    @apply h-screen w-screen;
+    @apply h-full w-full;
+    display: flex;
+    flex-direction: column;
   }
 }
 
@@ -32,4 +35,5 @@
     @apply bg-discord-light;
   }
 }
+
 

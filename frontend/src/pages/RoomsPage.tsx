@@ -88,7 +88,7 @@ export default function RoomsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-discord-dark">
+    <div className="flex-1 flex flex-col bg-discord-dark min-h-0 overflow-hidden">
       <div className="p-6 border-b border-discord-darker">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -108,7 +108,7 @@ export default function RoomsPage() {
             {user && (
               <button
                 onClick={() => setShowCreateForm((prev) => !prev)}
-                className="px-4 py-2 bg-discord-primary hover:bg-discord-primaryHover text-white rounded transition-colors"
+                className="px-3 py-2 text-sm md:px-4 md:text-base bg-discord-primary hover:bg-discord-primaryHover text-white rounded transition-colors whitespace-nowrap"
               >
                 {showCreateForm ? 'Close' : 'Create Room'}
               </button>
@@ -117,7 +117,7 @@ export default function RoomsPage() {
         </div>
         {showCreateForm && user && (
           <form onSubmit={handleCreateRoom} className="mt-4 bg-discord-darker rounded-lg p-4 space-y-3">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <label className="block text-sm mb-1 text-discord-textMuted">Room name</label>
                 <input
@@ -213,11 +213,10 @@ export default function RoomsPage() {
                       )}
                     </div>
                     <span
-                      className={`text-xs font-semibold px-2 py-1 rounded ${
-                        room.is_public
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-300'
-                      }`}
+                      className={`text-xs font-semibold px-2 py-1 rounded ${room.is_public
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-yellow-500/20 text-yellow-300'
+                        }`}
                     >
                       {room.is_public ? 'Public' : 'Private'}
                     </span>
@@ -228,13 +227,12 @@ export default function RoomsPage() {
                     <div className="flex items-center gap-2">
                       {room.is_member ? (
                         <span
-                          className={`px-2 py-1 rounded text-xs ${
-                            isOwner
-                              ? 'bg-purple-500/20 text-purple-300'
-                              : isAdmin
+                          className={`px-2 py-1 rounded text-xs ${isOwner
+                            ? 'bg-purple-500/20 text-purple-300'
+                            : isAdmin
                               ? 'bg-blue-500/20 text-blue-300'
                               : 'bg-discord-dark text-discord-text'
-                          }`}
+                            }`}
                         >
                           {isOwner ? 'Owner' : isAdmin ? 'Admin' : 'Member'}
                         </span>

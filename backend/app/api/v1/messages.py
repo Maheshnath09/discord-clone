@@ -164,9 +164,10 @@ async def create_message(
         "content": message.content,
         "content_type": message.content_type,
         "attachments_json": message.attachments_json,
-        "created_at": message.created_at,
-        "edited_at": message.edited_at,
-        "deleted_at": message.deleted_at,
+        # Convert datetime objects to ISO strings for JSON serialization
+        "created_at": message.created_at.isoformat() if message.created_at else None,
+        "edited_at": message.edited_at.isoformat() if message.edited_at else None,
+        "deleted_at": message.deleted_at.isoformat() if message.deleted_at else None,
     }
     msg_dict["author"] = {
         "id": current_user.id,
@@ -179,17 +180,22 @@ async def create_message(
     # Broadcast the new message to any connected WebSocket clients in the room.
     # We do this in a best-effort manner: if the websocket manager isn't
     # initialized (for example in certain test modes), don't raise.
+    print(f"[MESSAGE_CREATE] About to broadcast message {message.id} to room {room_id}")
     try:
         broadcast_payload = {
             "type": "message.create",
             "data": msg_dict,
         }
+        print(f"[MESSAGE_CREATE] Calling broadcast_to_room for room {room_id}")
+        
         # Fire-and-forget: let the websocket manager handle publishing to local
         # connections and Redis for other instances.
         await websocket_manager.broadcast_to_room(room_id, broadcast_payload)
-    except Exception:
-        # Log is intentionally omitted to avoid noise; this is non-fatal.
-        pass
+        print(f"[MESSAGE_CREATE] Broadcast complete for message {message.id}")
+    except Exception as e:
+        print(f"[MESSAGE_CREATE] ERROR: Failed to broadcast: {e}")
+        import traceback
+        traceback.print_exc()
 
     return MessageResponse(**msg_dict)
 
