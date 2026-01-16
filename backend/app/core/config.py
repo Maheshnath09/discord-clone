@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
     
+    # CORS - Additional origins from environment (comma-separated)
+    ALLOWED_ORIGINS: str = ""  # Comma-separated list of allowed origins
+    
     # CORS
     # Include common dev origins and the docker-compose service hostnames so
     # requests from the frontend container (origin `http://frontend`) are allowed
@@ -59,6 +62,20 @@ class Settings(BaseSettings):
         "http://frontend:80",
     ]
     ALLOWED_HOSTS: List[str] = ["*"]
+    
+    def get_cors_origins(self) -> List[str]:
+        """Get all CORS origins including those from environment."""
+        origins = list(self.CORS_ORIGINS)
+        # Add FRONTEND_URL if not already included
+        if self.FRONTEND_URL and self.FRONTEND_URL not in origins:
+            origins.append(self.FRONTEND_URL)
+        # Add ALLOWED_ORIGINS (comma-separated from env)
+        if self.ALLOWED_ORIGINS:
+            for origin in self.ALLOWED_ORIGINS.split(","):
+                origin = origin.strip()
+                if origin and origin not in origins:
+                    origins.append(origin)
+        return origins
     
     # Rate limiting
     RATE_LIMIT_ENABLED: bool = True
