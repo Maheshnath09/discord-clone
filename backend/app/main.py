@@ -71,6 +71,16 @@ async def health_check():
     return {"status": "healthy"}
 
 
+@app.get("/debug/cors")
+async def cors_debug():
+    """Debug endpoint to check CORS configuration."""
+    return {
+        "cors_origins": settings.get_cors_origins(),
+        "frontend_url": settings.FRONTEND_URL,
+        "allowed_origins_env": settings.ALLOWED_ORIGINS,
+    }
+
+
 @app.get("/debug/websocket")
 async def websocket_debug():
     """Debug endpoint to check WebSocket connection status."""
