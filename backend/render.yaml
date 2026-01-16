@@ -1,0 +1,26 @@
+# Render Blueprint - Deploy Backend
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: discord-clone-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false  # Set manually with Neon URL
+      - key: REDIS_URL
+        sync: false  # Set manually with Upstash URL
+      - key: FRONTEND_URL
+        sync: false  # Set to your Vercel URL
+      - key: ALLOWED_ORIGINS
+        sync: false  # Set to your Vercel URL
+      - key: AUTO_SEED_DEMO_DATA
+        value: "true"
+    healthCheckPath: /api/health
+    autoDeploy: true
