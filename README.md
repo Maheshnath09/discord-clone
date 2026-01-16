@@ -104,7 +104,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     subgraph Login
-        A[User] -->|Credentials| B[/api/auth/login]
+        A[User] -->|Credentials| B["Login API"]
         B -->|Validate| C{Valid?}
         C -->|Yes| D[Generate JWT]
         C -->|No| E[401 Error]
@@ -493,7 +493,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**Built with ❤️ by [Your Name]**
+**Built with ❤️ by Mahesh Nath**
 
 ⭐ Star this repo if you find it useful!
 
