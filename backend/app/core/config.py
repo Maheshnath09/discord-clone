@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     S3_REGION: str = "us-east-1"
     USE_S3: bool = False
     
+    # Supabase Storage (for avatars)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_KEY: Optional[str] = None  # Use service_role key for server-side uploads
+    SUPABASE_BUCKET: str = "avatars"
+    USE_SUPABASE: bool = False
+    
     # File uploads
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB

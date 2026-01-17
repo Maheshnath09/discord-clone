@@ -50,7 +50,9 @@ async def upload_avatar(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Upload user avatar."""
+    """Upload user avatar to Supabase Storage."""
+    from io import BytesIO
+    
     # Validate file type
     if file.content_type not in settings.ALLOWED_IMAGE_TYPES:
         raise HTTPException(
@@ -66,29 +68,65 @@ async def upload_avatar(
             detail=f"File too large. Max size: {settings.MAX_UPLOAD_SIZE} bytes",
         )
     
-    # Create upload directory
-    upload_dir = Path(settings.UPLOAD_DIR) / "avatars"
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    # Process image - resize for optimal storage
+    try:
+        img = Image.open(BytesIO(contents))
+        
+        # Convert to RGB if necessary (for PNG with transparency)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        
+        # Resize to max 400x400 for avatars
+        img.thumbnail((400, 400), Image.Resampling.LANCZOS)
+        
+        # Save to bytes with compression
+        output = BytesIO()
+        img.save(output, format='JPEG', optimize=True, quality=85)
+        processed_data = output.getvalue()
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Could not process image: {str(e)}",
+        )
     
     # Generate unique filename
-    file_ext = Path(file.filename).suffix or ".jpg"
-    filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = upload_dir / filename
+    filename = f"user_{current_user.id}_{uuid.uuid4()}.jpg"
     
-    # Save file
-    with open(file_path, "wb") as f:
-        f.write(contents)
-    
-    # Optionally resize/crop image
-    try:
-        img = Image.open(file_path)
-        img.thumbnail((400, 400), Image.Resampling.LANCZOS)
-        img.save(file_path, optimize=True, quality=85)
-    except Exception:
-        pass  # If image processing fails, keep original
+    # Upload to Supabase Storage if configured
+    if settings.USE_SUPABASE and settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            from supabase import create_client
+            
+            supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+            
+            # Upload to Supabase Storage
+            result = supabase.storage.from_(settings.SUPABASE_BUCKET).upload(
+                path=filename,
+                file=processed_data,
+                file_options={"content-type": "image/jpeg", "upsert": "true"}
+            )
+            
+            # Get public URL
+            avatar_url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(filename)
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to upload to storage: {str(e)}",
+            )
+    else:
+        # Fallback to local storage (for development)
+        upload_dir = Path(settings.UPLOAD_DIR) / "avatars"
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        file_path = upload_dir / filename
+        
+        with open(file_path, "wb") as f:
+            f.write(processed_data)
+        
+        avatar_url = f"/uploads/avatars/{filename}"
     
     # Update user avatar URL
-    avatar_url = f"/uploads/avatars/{filename}"
     current_user.avatar_url = avatar_url
     await db.commit()
     await db.refresh(current_user)
