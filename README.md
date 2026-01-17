@@ -9,6 +9,7 @@ Built with **FastAPI**, **React + TypeScript**, **WebSockets**, and **Redis**.
 [![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
 </div>
@@ -65,6 +66,7 @@ flowchart TB
     subgraph Data["💾 Data Layer"]
         SQLite["SQLite / PostgreSQL"]
         Redis["Redis Cache"]
+        Supabase["Supabase Storage"]
     end
     
     Browser --> React
@@ -218,6 +220,7 @@ flowchart TB
 | **SQLAlchemy** | Async ORM for database operations |
 | **SQLite/PostgreSQL** | Relational database |
 | **Redis** | Pub/Sub messaging & caching |
+| **Supabase Storage** | Cloud file storage for avatars |
 | **WebSockets** | Real-time bidirectional communication |
 | **JWT (PyJWT)** | Token-based authentication |
 | **Bcrypt** | Password hashing |
