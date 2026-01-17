@@ -2,11 +2,6 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import api from '../services/api'
 
-// Generate a unique tab ID for this browser tab instance
-// This helps isolate sessions when tabs are duplicated
-const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-const TAB_ID = generateTabId()
-
 interface User {
   id: number
   username: string
@@ -20,7 +15,7 @@ interface AuthState {
   user: User | null
   accessToken: string | null
   isAuthenticated: boolean
-  tabId: string | null  // Track which tab owns this session
+  isLoading: boolean
   setAuth: (user: User, token: string) => void
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
@@ -32,10 +27,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       accessToken: null,
       isAuthenticated: false,
-      tabId: null,
+      isLoading: true,
 
       setAuth: (user, token) => {
-        set({ user, accessToken: token, isAuthenticated: true, tabId: TAB_ID })
+        set({ user, accessToken: token, isAuthenticated: true, isLoading: false })
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`
       },
 
@@ -45,25 +40,16 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error('Logout error:', error)
         } finally {
-          set({ user: null, accessToken: null, isAuthenticated: false, tabId: null })
+          set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false })
           delete api.defaults.headers.common['Authorization']
         }
       },
 
       checkAuth: async () => {
-        const { accessToken, tabId } = get()
-
-        // If this session was created by a different tab (e.g., tab was duplicated),
-        // invalidate it to force fresh login
-        if (tabId && tabId !== TAB_ID) {
-          console.log('Session from different tab detected, clearing auth state')
-          set({ user: null, accessToken: null, isAuthenticated: false, tabId: null })
-          delete api.defaults.headers.common['Authorization']
-          return
-        }
+        const { accessToken } = get()
 
         if (!accessToken) {
-          set({ isAuthenticated: false })
+          set({ isAuthenticated: false, isLoading: false })
           return
         }
 
@@ -72,36 +58,29 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await api.get('/users/me')
-          set({ user: response.data, isAuthenticated: true, tabId: TAB_ID })
+          set({ user: response.data, isAuthenticated: true, isLoading: false })
         } catch (error) {
-          set({ user: null, accessToken: null, isAuthenticated: false, tabId: null })
+          // Token invalid or expired - clear auth state
+          set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false })
           delete api.defaults.headers.common['Authorization']
         }
       },
     }),
     {
       name: 'auth-storage',
-      // Use sessionStorage so different tabs/windows can have independent
-      // authentication state (localStorage is shared across tabs).
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({ accessToken: state.accessToken, tabId: state.tabId }),
+      // Use localStorage to persist across page refreshes and browser sessions
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        accessToken: state.accessToken,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated
+      }),
       // Restore the Authorization header when the store is rehydrated from storage
       onRehydrateStorage: () => (state) => {
         if (state?.accessToken) {
-          // Check if this tab owns the session
-          if (state.tabId && state.tabId !== TAB_ID) {
-            // Session was created by different tab (duplicated tab), don't restore
-            console.log('Ignoring session from duplicated tab')
-            return
-          }
           api.defaults.headers.common['Authorization'] = `Bearer ${state.accessToken}`
-          // Mark as authenticated if we have a token
-          // The checkAuth will verify it's still valid
-          state.isAuthenticated = true
         }
       },
     }
   )
 )
-
-

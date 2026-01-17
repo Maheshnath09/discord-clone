@@ -9,14 +9,24 @@ import RoomsPage from './pages/RoomsPage'
 import ProfilePage from './pages/ProfilePage'
 
 function App() {
-  const { isAuthenticated, checkAuth, accessToken } = useAuthStore()
+  const { isAuthenticated, isLoading, checkAuth, accessToken } = useAuthStore()
 
   // Validate token and load user data on mount
   useEffect(() => {
-    if (accessToken) {
-      checkAuth()
-    }
-  }, [accessToken, checkAuth])
+    checkAuth()
+  }, [checkAuth])
+
+  // Show loading indicator while checking auth
+  if (isLoading && accessToken) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <BrowserRouter>
@@ -37,7 +47,3 @@ function App() {
 }
 
 export default App
-
-
-
-
