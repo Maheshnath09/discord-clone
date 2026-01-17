@@ -96,19 +96,28 @@ async def upload_avatar(
     # Upload to Supabase Storage if configured
     if settings.USE_SUPABASE and settings.SUPABASE_URL and settings.SUPABASE_KEY:
         try:
-            from supabase import create_client
+            import httpx
             
-            supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+            # Supabase Storage API endpoint
+            upload_url = f"{settings.SUPABASE_URL}/storage/v1/object/{settings.SUPABASE_BUCKET}/{filename}"
             
-            # Upload to Supabase Storage
-            result = supabase.storage.from_(settings.SUPABASE_BUCKET).upload(
-                path=filename,
-                file=processed_data,
-                file_options={"content-type": "image/jpeg", "upsert": "true"}
-            )
+            # Upload via HTTP PUT request
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    upload_url,
+                    content=processed_data,
+                    headers={
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                        "Content-Type": "image/jpeg",
+                        "x-upsert": "true",
+                    },
+                )
+                
+                if response.status_code not in (200, 201):
+                    raise Exception(f"Upload failed: {response.status_code} - {response.text}")
             
-            # Get public URL
-            avatar_url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(filename)
+            # Construct public URL
+            avatar_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{settings.SUPABASE_BUCKET}/{filename}"
             
         except Exception as e:
             raise HTTPException(
